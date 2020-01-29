@@ -1,0 +1,39 @@
+version: '3'
+services:
+  web:
+    container_name: "ruby"
+    build:
+        context: "./docker/ruby"
+        dockerfile: "Dockerfile"
+    ports:
+        - "3000:3000"
+    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    volumes:
+        - .:/var/www/html
+    networks:
+     - rails
+  db:
+    #dockerfileなくてもpullするだけだったら下記のコメントでもOK
+    #image: "mysql:latest"
+    container_name: "db"
+    ports:
+     - "3306:3306"
+    build:
+        context: "./docker/mysql"
+        dockerfile: "Dockerfile"
+    environment:
+      MYSQL_DATABASE: kintai_app_local
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+        # 永続化することでコンテナ削除してもOK
+        - "./docker/mysql/data:/var/lib/mysql"
+        # 初期データを投入するSQLが格納されているdir
+        - ./docker/mysql/init/:/docker-entrypoint-initdb.d/
+    networks:
+     - rails
+
+networks:
+  rails:
+    driver: "bridge"
